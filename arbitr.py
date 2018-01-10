@@ -9,6 +9,6 @@ class Arbitr:
 
     def get_bitfinex_prices(self, pairs):
         res = requests.request('GET', self.URL_BITFINEX + pairs)
-        print(res.read())
+        print(res.text)
         response_list = json.loads(res.text)
         print(response_list)
