@@ -1,5 +1,7 @@
 import requests
 import json
+import csv
+import sys
 
 """
 1: USD-BTC
@@ -35,45 +37,95 @@ import json
 32: MNA-BTC
 33: TNB-BTC
 34: RRT-BTC
+
+korbit
+bitstamp
+huobi
+hitbtc
+exmo
+Koinex
 """
 
 class Arbitr:
     # https: // api.kraken.com / 0 / public / Ticker?pair = XBTUSD
 
-    def __init__(self):
+    def __init__(self, csv_file_name):
+        self.csv_file_name = csv_file_name
         self.URL_BITFINEX = 'https://api.bitfinex.com/v2/tickers?symbols='
         self.URL_BITTREX = 'https://bittrex.com/api/v1.1/public/getticker?market='
-        self.URL_KRAKEN = 'https://bittrex.com/api/v1.1/public/getticker?market='
+        self.URL_KRAKEN = 'https://api.kraken.com/0/public/Ticker?pair='
+        self.URL_BINANCE = 'https://api.binance.com/api/v1/ticker/price?symbol='
+        self.names_of_market, self.universal_pairs = self.get_pair_list()
 
+    def get_all_pairs_by_market(self, market_name):
+        market_name_chaked = market_name.capitalize()
+        all_pairs_list = []
+        with open(self.csv_file_name) as csv_file:
+            dict_reader = csv.DictReader(csv_file, delimiter=";")
+            try:
+                for item in dict_reader:
+                    all_pairs_list.append(item[market_name_chaked])
+            except Exception:
+                return 'Ошибка в названии биржи: ' + str(sys.exc_info()[1])
+        return all_pairs_list
 
     def get_bitfinex_prices(self, pairs):
-        res = requests.request('GET', self.URL_BITFINEX + pairs)
+        res = requests.request('GET', self.URL_BITFINEX + ','.join(pairs))
         response_list = json.loads(res.text)
+        for i in range(len(pairs)):
+            if pairs[i] == 'None':
+                response_list.insert(i, 'None')
         pair_dict = {}
-        for pair in response_list:
-            pair_dict[pair[0]] = float(pair[-4])
+        for pair, key in zip(response_list, self.universal_pairs.keys()):
+            try:
+                pair_dict[key] = float(pair[-4])
+            except Exception:
+                pair_dict[key] = None
         return pair_dict
 
-
     def get_bittrex_prices(self, pairs):
-        pairs = pairs.split(',')
         pair_dict = {}
-        for pair in pairs:
+        for pair, key in zip(pairs, self.universal_pairs.keys()):
+            if pair == 'None':
+                pair_dict[key] = 'None'
+                continue
             res = requests.request('GET', self.URL_BITTREX + pair)
             response_dict = json.loads(res.text)
-            pair_dict[pair] = float(response_dict['result']['Last'])
+            pair_dict[key] = float(response_dict['result']['Last'])
+        return pair_dict
+
+    def get_binance_prices(self, pairs):
+        pair_dict = {}
+        for pair, key in zip(pairs, self.universal_pairs.keys()):
+            if pair == 'None':
+                pair_dict[key] = 'None'
+                continue
+            res = requests.request('GET', self.URL_BINANCE + pair)
+            response_dict = json.loads(res.text)
+            pair_dict[key] = float(response_dict['price'])
         return pair_dict
 
     def get_kraken_prices(self, pairs):
         pairs = pairs.split(',')
         pair_dict = {}
         for pair in pairs:
-            res = requests.request('GET', self.URL_BITTREX + pair)
+            res = requests.request('GET', self.URL_KRAKEN + pair)
             response_dict = json.loads(res.text)
-            pair_dict[pair] = float(response_dict['result']['Last'])
+            try:
+                pair_dict[pair] = float(response_dict['result']['Last'])
+            except Exception:
+                pair_dict[pair] = None
         return pair_dict
 
-
+    def get_pair_list(self):
+         with open(self.csv_file_name, newline='') as csvfile:
+            csvreader = csv.reader(csvfile)
+            names_of_markets = csvreader.__next__()[0].split(';')
+            universal_pairs = dict()
+            for row in csvreader:
+                row_list = row[0].split(';')
+                universal_pairs[row_list[0]] = row_list[1:]
+            return names_of_markets[1:], universal_pairs
 
 
 
