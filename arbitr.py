@@ -55,6 +55,8 @@ class Arbitr:
         self.URL_BITTREX = 'https://bittrex.com/api/v1.1/public/getticker?market='
         self.URL_KRAKEN = 'https://api.kraken.com/0/public/Ticker?pair='
         self.URL_BINANCE = 'https://api.binance.com/api/v1/ticker/price?symbol='
+        self.URL_EXMO = 'https://api.exmo.com/v1/ticker/?pair='
+        self.URL_HITBTC = 'https://api.hitbtc.com/api/2/public/ticker/'
         self.names_of_market, self.universal_pairs = self.get_pair_list()
 
     def get_all_pairs_by_market(self, market_name):
@@ -118,12 +120,38 @@ class Arbitr:
     def get_kraken_prices(self, pairs):
         pair_dict = {}
         for pair, key in zip(pairs, self.universal_pairs.keys()):
+            if pair == 'None':
+                pair_dict[key] = None
+                continue
             res = requests.request('GET', self.URL_KRAKEN + pair)
             response_dict = json.loads(res.text)
             try:
-                pair_dict[key] = float(response_dict['result']['Last'])
+                kraken_prefix = 'X' + pair[:3] + 'X' + pair[3:]
+                pair_dict[key] = float(response_dict['result'][kraken_prefix]['c'][0])
             except Exception:
                 pair_dict[key] = None
+        return pair_dict
+
+    def get_exmo_prices(self, pairs):
+        pair_dict = {}
+        for pair, key in zip(pairs, self.universal_pairs.keys()):
+            if pair == 'None':
+                pair_dict[key] = None
+                continue
+            res = requests.request('GET', self.URL_EXMO + pair)
+            response_dict = json.loads(res.text)
+            pair_dict[key] = float(response_dict[pair]['last_trade'])
+        return pair_dict
+
+    def get_hitbtc_prices(self, pairs):
+        pair_dict = {}
+        for pair, key in zip(pairs, self.universal_pairs.keys()):
+            if pair == 'None':
+                pair_dict[key] = None
+                continue
+            res = requests.request('GET', self.URL_HITBTC + pair)
+            response_dict = json.loads(res.text)
+            pair_dict[key] = float(response_dict['last'])
         return pair_dict
 
     def get_all_pairs_prices(self):
@@ -132,9 +160,16 @@ class Arbitr:
         bittrex_prices = self.get_bittrex_prices(self.get_all_pairs_by_market('Bittrex'))
         binance_prices = self.get_binance_prices(self.get_all_pairs_by_market('Binance'))
         kraken_prices = self.get_kraken_prices(self.get_all_pairs_by_market('Kraken'))
+        exmo_prices = self.get_exmo_prices(self.get_all_pairs_by_market('Exmo'))
+        hitbtc_prices = self.get_hitbtc_prices(self.get_all_pairs_by_market('Hitbtc'))
         for pair in self.universal_pairs.keys():
             pairs_prices_dict[pair] = [
-                bitfinex_prices[pair], bittrex_prices[pair], kraken_prices[pair], binance_prices[pair]
+                bitfinex_prices[pair],
+                bittrex_prices[pair],
+                kraken_prices[pair],
+                binance_prices[pair],
+                exmo_prices[pair],
+                hitbtc_prices[pair]
             ]
         return pairs_prices_dict
 
