@@ -46,8 +46,8 @@ exmo
 Koinex
 """
 
+
 class Arbitr:
-    # https: // api.kraken.com / 0 / public / Ticker?pair = XBTUSD
 
     def __init__(self, csv_file_name):
         self.csv_file_name = csv_file_name
@@ -68,6 +68,16 @@ class Arbitr:
             except Exception:
                 return 'Ошибка в названии биржи: ' + str(sys.exc_info()[1])
         return all_pairs_list
+
+    def get_pair_list(self):
+         with open(self.csv_file_name, newline='') as csvfile:
+            csvreader = csv.reader(csvfile)
+            names_of_markets = csvreader.__next__()[0].split(';')
+            universal_pairs = dict()
+            for row in csvreader:
+                row_list = row[0].split(';')
+                universal_pairs[row_list[0]] = row_list[1:]
+            return names_of_markets[1:], universal_pairs
 
     def get_bitfinex_prices(self, pairs):
         res = requests.request('GET', self.URL_BITFINEX + ','.join(pairs))
@@ -106,26 +116,66 @@ class Arbitr:
         return pair_dict
 
     def get_kraken_prices(self, pairs):
-        pairs = pairs.split(',')
         pair_dict = {}
-        for pair in pairs:
+        for pair, key in zip(pairs, self.universal_pairs.keys()):
             res = requests.request('GET', self.URL_KRAKEN + pair)
             response_dict = json.loads(res.text)
             try:
-                pair_dict[pair] = float(response_dict['result']['Last'])
+                pair_dict[key] = float(response_dict['result']['Last'])
             except Exception:
-                pair_dict[pair] = None
+                pair_dict[key] = None
         return pair_dict
 
-    def get_pair_list(self):
-         with open(self.csv_file_name, newline='') as csvfile:
-            csvreader = csv.reader(csvfile)
-            names_of_markets = csvreader.__next__()[0].split(';')
-            universal_pairs = dict()
-            for row in csvreader:
-                row_list = row[0].split(';')
-                universal_pairs[row_list[0]] = row_list[1:]
-            return names_of_markets[1:], universal_pairs
+    def get_all_pairs_prices(self):
+        pairs_prices_dict = {}
+        bitfinex_prices = self.get_bitfinex_prices(self.get_all_pairs_by_market('Bitfinex'))
+        bittrex_prices = self.get_bittrex_prices(self.get_all_pairs_by_market('Bittrex'))
+        binance_prices = self.get_binance_prices(self.get_all_pairs_by_market('Binance'))
+        kraken_prices = self.get_kraken_prices(self.get_all_pairs_by_market('Kraken'))
+        for pair in self.universal_pairs.keys():
+            pairs_prices_dict[pair] = [
+                bitfinex_prices[pair], bittrex_prices[pair], kraken_prices[pair], binance_prices[pair]
+            ]
+        return pairs_prices_dict
+
+    def get_min_in_list(self, price_list):
+        min = 10000000
+        index = 0
+        for i in range(len(price_list)):
+            try:
+                price_list[i] = float(price_list[i])
+            except Exception:
+                continue
+            if price_list[i] < min:
+                min = price_list[i]
+                index = i
+        name_of_min_market = self.names_of_market[index]
+        return (min, name_of_min_market)
+
+    def get_max_in_list(self, price_list):
+        max = 0
+        index = 0
+        for i in range(len(price_list)):
+            try:
+                price_list[i] = float(price_list[i])
+            except Exception:
+                continue
+            if price_list[i] > max:
+                max = price_list[i]
+                index = i
+        name_of_min_market = self.names_of_market[index]
+        return (max, name_of_min_market)
+
+    def print_all_defferences(self):
+        pairs_prices_dict = self.get_all_pairs_prices()
+        res_s = ''
+        for pair in pairs_prices_dict:
+            res_s += str(pair) + ': ' + str(pairs_prices_dict[pair]) + '    '
+            min_list = self.get_min_in_list(pairs_prices_dict[pair])
+            max_list = self.get_max_in_list(pairs_prices_dict[pair])
+            difference = round((max_list[0] - min_list[0]) * 100 / min_list[0], 2)
+            res_s += str(difference) + '%  ' + min_list[1] + ' --> ' + max_list[1] + '\n'
+        print(res_s)
 
 
 
