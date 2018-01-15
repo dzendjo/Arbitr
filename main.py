@@ -11,6 +11,9 @@ a = Arbitr('pairs_data.csv')
 # print(a.get_kraken_prices(a.get_all_pairs_by_market('kraken')))
 # print(a.get_exmo_prices(a.get_all_pairs_by_market('exmo')))
 # print(a.get_hitbtc_prices(a.get_all_pairs_by_market('hitbtc')))
+# print(a.get_poloniex_prices(a.get_all_pairs_by_market('poloniex')))
+
+
 # print(a.get_all_pairs_prices())
 # print(a.get_min_in_list([0.0001448, 0.00014499, None, 0.00014466]))
 # print(a.get_max_in_list([0.0001448, 0.00014499, None, 0.00014466]))

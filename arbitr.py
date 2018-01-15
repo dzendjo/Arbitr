@@ -57,6 +57,7 @@ class Arbitr:
         self.URL_BINANCE = 'https://api.binance.com/api/v1/ticker/price?symbol='
         self.URL_EXMO = 'https://api.exmo.com/v1/ticker/?pair='
         self.URL_HITBTC = 'https://api.hitbtc.com/api/2/public/ticker/'
+        self.URL_POLONIEX = 'https://poloniex.com/public?command=returnTicker'
         self.names_of_market, self.universal_pairs = self.get_pair_list()
 
     def get_all_pairs_by_market(self, market_name):
@@ -154,6 +155,17 @@ class Arbitr:
             pair_dict[key] = float(response_dict['last'])
         return pair_dict
 
+    def get_poloniex_prices(self, pairs):
+        pair_dict = {}
+        res = requests.request('GET', self.URL_POLONIEX)
+        response_dict = json.loads(res.text)
+        for pair, key in zip(pairs, self.universal_pairs.keys()):
+            if pair == 'None':
+                pair_dict[key] = None
+                continue
+            pair_dict[key] = float(response_dict[pair]['last'])
+        return pair_dict
+
     def get_all_pairs_prices(self):
         pairs_prices_dict = {}
         bitfinex_prices = self.get_bitfinex_prices(self.get_all_pairs_by_market('Bitfinex'))
@@ -162,6 +174,7 @@ class Arbitr:
         kraken_prices = self.get_kraken_prices(self.get_all_pairs_by_market('Kraken'))
         exmo_prices = self.get_exmo_prices(self.get_all_pairs_by_market('Exmo'))
         hitbtc_prices = self.get_hitbtc_prices(self.get_all_pairs_by_market('Hitbtc'))
+        poloniex_prices = self.get_poloniex_prices(self.get_all_pairs_by_market('Poloniex'))
         for pair in self.universal_pairs.keys():
             pairs_prices_dict[pair] = [
                 bitfinex_prices[pair],
@@ -169,7 +182,8 @@ class Arbitr:
                 kraken_prices[pair],
                 binance_prices[pair],
                 exmo_prices[pair],
-                hitbtc_prices[pair]
+                hitbtc_prices[pair],
+                poloniex_prices[pair]
             ]
         return pairs_prices_dict
 
