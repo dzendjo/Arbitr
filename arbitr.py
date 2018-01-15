@@ -52,13 +52,17 @@ class Arbitr:
     def __init__(self, csv_file_name):
         self.csv_file_name = csv_file_name
         self.URL_BITFINEX = 'https://api.bitfinex.com/v2/tickers?symbols='
-        self.URL_BITTREX = 'https://bittrex.com/api/v1.1/public/getticker?market='
+        self.URL_BITTREX = 'https://bittrex.com/api/v1.1/public/getmarketsummaries'
         self.URL_KRAKEN = 'https://api.kraken.com/0/public/Ticker?pair='
-        self.URL_BINANCE = 'https://api.binance.com/api/v1/ticker/price?symbol='
-        self.URL_EXMO = 'https://api.exmo.com/v1/ticker/?pair='
+        self.URL_BINANCE = 'https://api.binance.com/api/v1/ticker/price'
+        self.URL_EXMO = 'https://api.exmo.com/v1/ticker/'
         self.URL_HITBTC = 'https://api.hitbtc.com/api/2/public/ticker/'
         self.URL_POLONIEX = 'https://poloniex.com/public?command=returnTicker'
         self.names_of_market, self.universal_pairs = self.get_pair_list()
+
+    def dell_none_from_list(self, input_list):
+        return ','.join(item for item in input_list if item != 'None')
+
 
     def get_all_pairs_by_market(self, market_name):
         market_name_chaked = market_name.capitalize()
@@ -83,7 +87,7 @@ class Arbitr:
             return names_of_markets[1:], universal_pairs
 
     def get_bitfinex_prices(self, pairs):
-        res = requests.request('GET', self.URL_BITFINEX + ','.join(pairs))
+        res = requests.request('GET', self.URL_BITFINEX + self.dell_none_from_list(pairs))
         response_list = json.loads(res.text)
         for i in range(len(pairs)):
             if pairs[i] == 'None':
@@ -98,34 +102,38 @@ class Arbitr:
 
     def get_bittrex_prices(self, pairs):
         pair_dict = {}
+        res = requests.request('GET', self.URL_BITTREX)
+        response_dict = json.loads(res.text)
         for pair, key in zip(pairs, self.universal_pairs.keys()):
             if pair == 'None':
                 pair_dict[key] = 'None'
                 continue
-            res = requests.request('GET', self.URL_BITTREX + pair)
-            response_dict = json.loads(res.text)
-            pair_dict[key] = float(response_dict['result']['Last'])
+            for item in response_dict['result']:
+                if item['MarketName'] == pair:
+                    pair_dict[key] = float(item['Last'])
         return pair_dict
 
     def get_binance_prices(self, pairs):
         pair_dict = {}
+        res = requests.request('GET', self.URL_BINANCE)
+        response_dict = json.loads(res.text)
         for pair, key in zip(pairs, self.universal_pairs.keys()):
             if pair == 'None':
                 pair_dict[key] = 'None'
                 continue
-            res = requests.request('GET', self.URL_BINANCE + pair)
-            response_dict = json.loads(res.text)
-            pair_dict[key] = float(response_dict['price'])
+            for item in response_dict:
+                if item['symbol'] == pair:
+                    pair_dict[key] = float(item['price'])
         return pair_dict
 
     def get_kraken_prices(self, pairs):
         pair_dict = {}
+        res = requests.request('GET', self.URL_KRAKEN + self.dell_none_from_list(pairs))
+        response_dict = json.loads(res.text)
         for pair, key in zip(pairs, self.universal_pairs.keys()):
             if pair == 'None':
                 pair_dict[key] = None
                 continue
-            res = requests.request('GET', self.URL_KRAKEN + pair)
-            response_dict = json.loads(res.text)
             try:
                 kraken_prefix = 'X' + pair[:3] + 'X' + pair[3:]
                 pair_dict[key] = float(response_dict['result'][kraken_prefix]['c'][0])
@@ -135,24 +143,32 @@ class Arbitr:
 
     def get_exmo_prices(self, pairs):
         pair_dict = {}
+        res = requests.request('GET', self.URL_EXMO)
+        response_dict = json.loads(res.text)
         for pair, key in zip(pairs, self.universal_pairs.keys()):
             if pair == 'None':
                 pair_dict[key] = None
                 continue
-            res = requests.request('GET', self.URL_EXMO + pair)
-            response_dict = json.loads(res.text)
-            pair_dict[key] = float(response_dict[pair]['last_trade'])
+            try:
+                pair_dict[key] = float(response_dict[pair]['last_trade'])
+            except Exception:
+                pair_dict[key] = None
         return pair_dict
 
     def get_hitbtc_prices(self, pairs):
         pair_dict = {}
+        res = requests.request('GET', self.URL_HITBTC)
+        response_dict = json.loads(res.text)
         for pair, key in zip(pairs, self.universal_pairs.keys()):
             if pair == 'None':
                 pair_dict[key] = None
                 continue
-            res = requests.request('GET', self.URL_HITBTC + pair)
-            response_dict = json.loads(res.text)
-            pair_dict[key] = float(response_dict['last'])
+            for item in response_dict:
+                if item['symbol'] == pair:
+                    try:
+                        pair_dict[key] = float(item['last'])
+                    except Exception:
+                        pair_dict[key] = None
         return pair_dict
 
     def get_poloniex_prices(self, pairs):
