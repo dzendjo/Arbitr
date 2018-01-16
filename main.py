@@ -1,27 +1,1 @@
-from arbitr import Arbitr
-import time
-
-
-a = Arbitr('pairs_data.csv')
-# print(a.universal_pairs)
-# print(a.get_all_pairs_by_market('Binance'))
-# print(a.get_bitfinex_prices(a.get_all_pairs_by_market('Bitfinex')))
-# print(a.get_bittrex_prices(a.get_all_pairs_by_market('bittrex')))
-# print(a.get_binance_prices(a.get_all_pairs_by_market('binance')))
-# print(a.get_kraken_prices(a.get_all_pairs_by_market('kraken')))
-# print(a.get_exmo_prices(a.get_all_pairs_by_market('exmo')))
-# print(a.get_hitbtc_prices(a.get_all_pairs_by_market('hitbtc')))
-# print(a.get_poloniex_prices(a.get_all_pairs_by_market('poloniex')))
-
-
-# print(a.get_all_pairs_prices())
-# print(a.get_min_in_list([0.0001448, 0.00014499, None, 0.00014466]))
-# print(a.get_max_in_list([0.0001448, 0.00014499, None, 0.00014466]))
-
-while True:
-    a.print_all_defferences()
-    time.sleep(10)
-
-
-
-
+from arbitr import Arbitrimport timetest_dict = {'XRP-BTC': [0.00010929, 0.00011009, 0.00010913, 0.00010903, 0.00011119, 0.00010822, 0.00010948],             'XRP-ETH': [None, 0.00117308, None, 0.00117299, None, 0.00119, None],             'ETH-BTC': [0.092787, 0.09318291, 0.09292, 0.092792, 0.09348676, 0.09282, 0.09317187]}a = Arbitr('pairs_data.csv')# a.print_nice_variants()# print(a.universal_pairs)# print(a.get_all_pairs_by_market('Binance'))# print(a.get_bitfinex_prices(a.get_all_pairs_by_market('Bitfinex')))# print(a.get_bittrex_prices(a.get_all_pairs_by_market('bittrex')))# print(a.get_binance_prices(a.get_all_pairs_by_market('binance')))# print(a.get_kraken_prices(a.get_all_pairs_by_market('kraken')))# print(a.get_exmo_prices(a.get_all_pairs_by_market('exmo')))# print(a.get_hitbtc_prices(a.get_all_pairs_by_market('hitbtc')))# print(a.get_poloniex_prices(a.get_all_pairs_by_market('poloniex')))print(a.get_all_pairs_prices())# print(a.get_min_in_list([0.0001448, 0.00014499, None, 0.00014466]))# print(a.get_max_in_list([0.0001448, 0.00014499, None, 0.00014466]))## while True:#     a.print_nice_variants()#     time.sleep(10)
