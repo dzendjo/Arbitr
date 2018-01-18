@@ -18,10 +18,6 @@ a = Arbitr('pairs_data.csv')
 # print(a.get_min_in_list([0.0001448, 0.00014499, None, 0.00014466]))
 # print(a.get_max_in_list([0.0001448, 0.00014499, None, 0.00014466]))
 
-while True:
-    a.print_all_defferences()
-    time.sleep(10)
-
-
-
-
+# while True:
+#     a.print_all_defferences()
+#     time.sleep(10)
